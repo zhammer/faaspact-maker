@@ -7,8 +7,8 @@ import requests
 
 import responses
 
-from faaspact_mocker.definitions import Interaction, Pact
-from faaspact_mocker.pact_file_gateway import PactFileGateway
+from faaspact_maker.definitions import Interaction, Pact
+from faaspact_maker.pact_file_gateway import PactFileGateway
 
 
 class Call(NamedTuple):
@@ -17,7 +17,7 @@ class Call(NamedTuple):
     interaction: Interaction
 
 
-class PactMocker:
+class PactMaker:
 
     def __init__(self, consumer_name: str, provider_name: str, provider_url: str) -> None:
         self.pact = Pact(
@@ -35,7 +35,7 @@ class PactMocker:
         self.calls.append(call)
 
     @contextmanager
-    def start(self) -> Generator:
+    def start_mocking(self) -> Generator:
         """Start mocking requests!"""
         with responses.RequestsMock() as responses_mock:
             _register_mock_interactions(
@@ -88,17 +88,15 @@ def _make_callback(interaction: Interaction,
 def _validate_call(call: Call) -> None:
     expected_request = call.interaction.request
 
-    if expected_request.headers:
+    if expected_request.headers is not None:
         assert set(expected_request.headers.items()).issubset(set(call.request.headers.items()))
 
     if expected_request.query is not None:
         assert call.request.url
-        assert set(expected_request.query.items()).issubset(
-            set(_pluck_query_params(call.request.url).items())
-        )
+        assert expected_request.query == _pluck_query_params(call.request.url)
 
-    if expected_request.json:
-        assert call.request.body is not None
+    if expected_request.json is not None:
+        assert call.request.body
         assert call.interaction.request.json == json.loads(call.request.body)
 
 

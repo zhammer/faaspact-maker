@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from typing import Dict
 
-from faaspact_mocker.definitions import Interaction, Pact, ProviderState, Request, Response
+from faaspact_maker.definitions import Interaction, Pact, ProviderState, Request, Response
 
 
 class PactFileGateway:
