@@ -10,6 +10,7 @@ flake8-per-file-ignores = "*"
 mypy = "*"
 flake8 = "*"
 pytest = "*"
+twine = "*"
 
 [packages]
 responses = "*"
