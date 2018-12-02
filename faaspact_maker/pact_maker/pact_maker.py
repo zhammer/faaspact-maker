@@ -1,7 +1,7 @@
 import json
-from contextlib import contextmanager
-from typing import Callable, Dict, Generator, List, NamedTuple, Tuple
-from urllib.parse import parse_qsl, urlparse
+from contextlib import contextmanager, nullcontext
+from typing import Callable, Dict, Generator, List, NamedTuple, Optional, Tuple
+from urllib.parse import parse_qs, urlparse
 
 import requests
 
@@ -9,16 +9,12 @@ import responses
 
 from faaspact_maker.definitions import Interaction, Pact
 from faaspact_maker.pact_file_gateway import PactFileGateway
-
-
-class Call(NamedTuple):
-    """A call made within the mocked environment for a given interaction."""
-    request: requests.models.PreparedRequest
-    interaction: Interaction
+from faaspact_maker.pact_maker.definitions import Call
+from faaspact_maker.pact_maker.types import RequestsCallback, RequestsMockProtocol
 
 
 class PactMaker:
-
+    """Make a pact"""
     def __init__(self, consumer_name: str, provider_name: str, provider_url: str) -> None:
         self.pact = Pact(
             consumer_name=consumer_name,
@@ -35,26 +31,19 @@ class PactMaker:
         self.calls.append(call)
 
     @contextmanager
-    def start_mocking(self) -> Generator:
+    def start_mocking(self, *, outer: Optional[RequestsMockProtocol] = None) -> Generator:
         """Start mocking requests!"""
-        with responses.RequestsMock() as responses_mock:
-            _register_mock_interactions(
-                self.pact.interactions,
-                self.provider_url,
-                self.add_call,
-                responses_mock
-            )
+        context_manager = responses.RequestsMock() if not outer else contextlib.nullcontext(outer)
+
+        with context_manager as responses_mock:
+            _register_mock_interactions(self.pact.interactions, self.provider_url, self.add_call, responses_mock)
 
             yield
 
         for call in self.calls:
             _validate_call(call)
 
-        pact_file_gateway = PactFileGateway()
-        pact_file_gateway.write_pact_file(self.pact)
-
-
-_RequestsCallback = Callable[[requests.models.PreparedRequest], Tuple[int, Dict, str]]
+        PactFileGateway.write_pact_file(self.pact)
 
 
 def _register_mock_interactions(
@@ -64,7 +53,7 @@ def _register_mock_interactions(
         responses_mock: responses.RequestsMock) -> None:
     """Messy!"""
     for interaction in interactions:
-        callback: _RequestsCallback = _make_callback(interaction, register_call)
+        callback: RequestsCallback = _make_callback(interaction, register_call)
         responses_mock.add_callback(
             interaction.request.method,
             f'{provider_url}{interaction.request.path}',
@@ -73,9 +62,9 @@ def _register_mock_interactions(
 
 
 def _make_callback(interaction: Interaction,
-                   register_call: Callable[[Call], None]) -> _RequestsCallback:
+                   register_call: Callable[[Call], None]) -> RequestsCallback:
     def callback(request: requests.models.PreparedRequest) -> Tuple[int, Dict, str]:
-        register_call(Call(request, interaction))
+        register_call(Call(request, interaction))  # todo: pluck out an understood request
         return (
             interaction.response.status_code,
             interaction.response.headers or {},
@@ -102,4 +91,4 @@ def _validate_call(call: Call) -> None:
 
 def _pluck_query_params(url: str) -> Dict:
     qs = urlparse(url).query
-    return dict(parse_qsl(qs))
+    return parse_qs(qs)

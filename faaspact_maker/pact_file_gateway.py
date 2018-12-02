@@ -37,16 +37,14 @@ def _build_pact_json(pact: Pact) -> Dict:
 
 
 def _build_interaction(interaction: Interaction) -> Dict:
-    built = {
+    return _drop_none_values({
         'description': interaction.description,
         'request': _build_request(interaction.request),
-        'response': _build_response(interaction.response)
-    }
-    if interaction.provider_states is not None:
-        built['providerStates'] = [_build_provider_state(provider_state)
-                                   for provider_state in interaction.provider_states]
-
-    return built
+        'response': _build_response(interaction.response),
+        'providerStates': (interaction.provider_states and
+                           [_build_provider_state(provider_state)
+                            for provider_state in interaction.provider_states])
+    })
 
 
 def _build_provider_state(provider_state: ProviderState) -> Dict:
