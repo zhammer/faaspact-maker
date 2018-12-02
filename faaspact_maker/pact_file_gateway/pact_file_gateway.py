@@ -91,32 +91,24 @@ def _build_request_matching_rules(request: Request) -> Optional[Dict]:
         }
 
     if request.headers:
-        header_matching_rules = _build_headers_matching_rules(request.headers)
-        if header_matching_rules:
-            matching_rules['header'] = header_matching_rules
+        matching_rules['header'] = _build_headers_matching_rules(request.headers)
 
     if request.json:
-        body_matching_rules = _build_body_matching_rules(request.json)
-        if body_matching_rules:
-            matching_rules['body'] = body_matching_rules
+        matching_rules['body'] = _build_body_matching_rules(request.json)
 
-    return matching_rules or None
+    return _drop_none_values(matching_rules) or None
 
 
 def _build_response_matching_rules(response: Response) -> Optional[Dict]:
     matching_rules: Dict = {}
 
     if response.headers:
-        header_matching_rules = _build_headers_matching_rules(response.headers)
-        if header_matching_rules:
-            matching_rules['header'] = header_matching_rules
+        matching_rules['header'] = _build_headers_matching_rules(response.headers)
 
     if response.json:
-        body_matching_rules = _build_body_matching_rules(response.json)
-        if body_matching_rules:
-            matching_rules['body'] = body_matching_rules
+        matching_rules['body'] = _build_body_matching_rules(response.json)
 
-    return matching_rules or None
+    return _drop_none_values(matching_rules) or None
 
 
 def _build_body_matching_rules(body: Dict) -> Optional[Dict]:
