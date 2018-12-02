@@ -79,7 +79,10 @@ def _build_body(body: Dict) -> Dict:
     without_matchers = {field: value.value if isinstance(value, matchers.Matcher) else value
                         for field, value in body.items()}
 
-    return without_matchers
+    without_dictionaries = {field: _build_body(value) if isinstance(value, dict) else value
+                            for field, value in without_matchers.items()}
+
+    return without_dictionaries
 
 
 def _build_request_matching_rules(request: Request) -> Optional[Dict]:
@@ -111,9 +114,7 @@ def _build_response_matching_rules(response: Response) -> Optional[Dict]:
     return _drop_none_values(matching_rules) or None
 
 
-def _build_body_matching_rules(body: Dict) -> Optional[Dict]:
-    parent = '$'
-
+def _build_body_matching_rules(body: Dict, parent: str = '$') -> Optional[Dict]:
     body_matching_rules: Dict = {}
 
     for field, value in body.items():
@@ -121,6 +122,9 @@ def _build_body_matching_rules(body: Dict) -> Optional[Dict]:
             body_matching_rules[f'{parent}.{field}'] = {
                 'matchers': [_build_regex_matcher(value)]
             }
+        elif isinstance(value, dict):
+            child_matching_rules = _build_body_matching_rules(value, f'{parent}.{field}') or {}
+            body_matching_rules = {**body_matching_rules, **child_matching_rules}
 
     return body_matching_rules or None
 
