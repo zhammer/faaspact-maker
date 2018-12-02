@@ -23,7 +23,7 @@ class Regex:
     pattern: str
 
     def __post_init__(self) -> None:
-        re.compile(self.pattern)
+        assert re.match(self.pattern, self.value)
 
 
 @dataclass

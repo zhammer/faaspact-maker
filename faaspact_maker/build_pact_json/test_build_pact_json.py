@@ -174,11 +174,11 @@ class TestBuildPactJson():
                     request=Request(
                         method='POST',
                         path='/gabe',
-                        headers={'Authorization': Regex('Bearer ABCDE', r'Bearer \S\+')}
+                        headers={'Authorization': Regex('Bearer ABCDE', r'Bearer \S+')}
                     ),
                     response=Response(
                         status_code=200,
-                        headers={'Age': Regex('12', r'\d\+')}
+                        headers={'Age': Regex('12', r'\d+')}
                     )
                 )
             ]
@@ -203,7 +203,7 @@ class TestBuildPactJson():
                                 'Authorization': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'Bearer \S\+'
+                                        'regex': r'Bearer \S+'
                                     }]
                                 }
                             }
@@ -217,7 +217,7 @@ class TestBuildPactJson():
                                 'Age': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'\d\+'
+                                        'regex': r'\d+'
                                     }]
                                 }
                             }
@@ -242,11 +242,11 @@ class TestBuildPactJson():
                     request=Request(
                         method='POST',
                         path='/gabe',
-                        json={'message': Regex('yooo', r'yo\+')}
+                        json={'message': Regex('yooo', r'yo+')}
                     ),
                     response=Response(
                         status_code=200,
-                        json={'message': Regex('ayee whatsup', r'aye\+ whatsup')}
+                        json={'message': Regex('ayee whatsup', r'aye+ whatsup')}
                     )
                 )
             ]
@@ -271,7 +271,7 @@ class TestBuildPactJson():
                                 '$.message': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'yo\+',
+                                        'regex': r'yo+',
                                     }]
                                 }
                             }
@@ -285,7 +285,7 @@ class TestBuildPactJson():
                                 '$.message': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'aye\+ whatsup',
+                                        'regex': r'aye+ whatsup',
                                     }]
                                 }
                             }
@@ -310,11 +310,11 @@ class TestBuildPactJson():
                     request=Request(
                         method='POST',
                         path='/gabe',
-                        json={'message': {'contents': Regex('yooo', r'yo\+')}}
+                        json={'message': {'contents': Regex('yooo', r'yo+')}}
                     ),
                     response=Response(
                         status_code=200,
-                        json={'message': {'contents': Regex('ayee whatsup', r'aye\+ whatsup')}}
+                        json={'message': {'contents': Regex('ayee whatsup', r'aye+ whatsup')}}
                     )
                 )
             ]
@@ -339,7 +339,7 @@ class TestBuildPactJson():
                                 '$.message.contents': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'yo\+',
+                                        'regex': r'yo+',
                                     }]
                                 }
                             }
@@ -353,7 +353,7 @@ class TestBuildPactJson():
                                 '$.message.contents': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'aye\+ whatsup',
+                                        'regex': r'aye+ whatsup',
                                     }]
                                 }
                             }
@@ -378,11 +378,11 @@ class TestBuildPactJson():
                     request=Request(
                         method='POST',
                         path='/gabe',
-                        json={'messages': [Regex('yooo', r'yo\+')]}
+                        json={'messages': [Regex('yooo', r'yo+')]}
                     ),
                     response=Response(
                         status_code=200,
-                        json={'messages': [Regex('ayee whatsup', r'aye\+ whatsup')]}
+                        json={'messages': [Regex('ayee whatsup', r'aye+ whatsup')]}
                     )
                 )
             ]
@@ -407,7 +407,7 @@ class TestBuildPactJson():
                                 '$.messages[0]': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'yo\+',
+                                        'regex': r'yo+',
                                     }]
                                 }
                             }
@@ -421,7 +421,7 @@ class TestBuildPactJson():
                                 '$.messages[0]': {
                                     'matchers': [{
                                         'match': 'regex',
-                                        'regex': r'aye\+ whatsup',
+                                        'regex': r'aye+ whatsup',
                                     }]
                                 }
                             }
