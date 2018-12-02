@@ -62,15 +62,12 @@ class TestBuildPactJson():
             provider_name='Gabe',
             interactions=[
                 Interaction(
-                    provider_states=(ProviderState('Gabe is online'),),
                     description='Zach messages gabe',
                     request=Request(
                         method='POST',
-                        path=Regex('/gabe', r'\/\w+'),
-                        json={'message': 'Hey gabe'}
+                        path=Regex('/gabe', r'\/\w+')
                     ),
                     response=Response(
-                        json={'message': 'Ayee whatsup'},
                         status_code=200
                     )
                 )
@@ -87,11 +84,9 @@ class TestBuildPactJson():
             'interactions': [
                 {
                     'description': 'Zach messages gabe',
-                    'providerStates': [{'name': 'Gabe is online'}],
                     'request': {
                         'method': 'POST',
                         'path': '/gabe',
-                        'body': {'message': 'Hey gabe'},
                         'matchingRules': {
                             'path': {
                                 'matchers': [
@@ -104,7 +99,6 @@ class TestBuildPactJson():
                         }
                     },
                     'response': {
-                        'body': {'message': 'Ayee whatsup'},
                         'status': 200
                     }
                 }
