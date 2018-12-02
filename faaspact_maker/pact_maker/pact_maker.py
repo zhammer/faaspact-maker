@@ -66,7 +66,7 @@ def _register_mock_interactions(
 def _make_callback(interaction: Interaction,
                    register_call: Callable[[Call], None]) -> RequestsCallback:
     def callback(request: requests.models.PreparedRequest) -> Tuple[int, Dict, str]:
-        register_call(Call(request, interaction))  # todo: pluck out an understood request
+        register_call(Call(_pluck_request(request), interaction))  # todo: pluck out an understood request
         return (
             interaction.response.status_code,
             interaction.response.headers or {},
@@ -74,6 +74,16 @@ def _make_callback(interaction: Interaction,
         )
 
     return callback
+
+
+def _pluck_request(request: requests.models.PreparedRequest) -> Request:
+    return Request(
+        method=request.method,
+        path=urlparse(request.url).path,
+        query=_pluck_query_params(request.url),
+        headers=request.headers
+        json=json.loads(request.body)
+    )
 
 
 def _validate_call(call: Call) -> None:
