@@ -1,9 +1,10 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from faaspact_maker.definitions import Interaction, Pact, ProviderState, Request, Response
+from faaspact_maker import matchers
 
 
 class PactFileGateway:
@@ -57,11 +58,33 @@ def _build_provider_state(provider_state: ProviderState) -> Dict:
 def _build_request(request: Request) -> Dict:
     return _drop_none_values({
         'method': request.method,
-        'path': request.path,
+        'path': _build_path(request),
         'query': request.query,
         'body': request.json,
-        'headers': request.headers
+        'headers': request.headers,
+        'matchingRules': _build_request_matching_rules(request)
     })
+
+
+def _build_path(request: Request) -> str:
+    return request.path if isinstance(request.path, str) else request.path.value
+
+
+def _build_request_matching_rules(request: Request) -> Optional[Dict]:
+    matching_rules: Dict = {}
+    if isinstance(request.path, matchers.Regex):
+        matching_rules['path'] = {
+            'matchers': [_build_regex_matcher(request.path)]
+        }
+
+    return matching_rules or None
+
+
+def _build_regex_matcher(regex_matcher: matchers.Regex) -> Dict:
+    return {
+        'match': 'regex',
+        'regex': regex_matcher.pattern
+    }
 
 
 def _build_response(response: Response) -> Dict:

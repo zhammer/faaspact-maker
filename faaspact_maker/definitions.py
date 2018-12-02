@@ -1,4 +1,6 @@
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+
+from faaspact_maker import matchers
 
 
 class ProviderState(NamedTuple):
@@ -8,7 +10,7 @@ class ProviderState(NamedTuple):
 
 class Request(NamedTuple):
     method: str
-    path: str
+    path: Union[str, matchers.Regex]
     query: Optional[Dict] = None
     headers: Optional[Dict] = None
     json: Optional[Dict] = None
