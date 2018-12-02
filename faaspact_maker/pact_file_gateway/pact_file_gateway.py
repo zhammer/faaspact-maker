@@ -12,7 +12,7 @@ class PactFileGateway:
     def write_pact_file(pact: Pact, *,
                         pact_directory: str = '',
                         overwrite_existing: bool = True) -> None:
-        pact_json = _build_pact_json(pact)
+        pact_json = build_pact_json(pact)
         pact_file_path = _build_pact_file_path(pact_directory, pact)
 
         if os.path.isfile(pact_file_path) and not overwrite_existing:
@@ -27,7 +27,7 @@ def _build_pact_file_path(pact_directory: str, pact: Pact) -> str:
     return os.path.join(pact_directory, f'{pact.consumer_name}-{pact.provider_name}.pact.json')
 
 
-def _build_pact_json(pact: Pact) -> Dict:
+def build_pact_json(pact: Pact) -> Dict:
     return {
         'provider': {'name': pact.provider_name},
         'consumer': {'name': pact.consumer_name},
