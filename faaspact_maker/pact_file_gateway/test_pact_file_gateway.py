@@ -5,7 +5,7 @@ from faaspact_maker.pact_file_gateway.pact_file_gateway import build_pact_json
 
 class TestBuildPactJson():
 
-    def test_builds_pact(self) -> None:
+    def test_builds_pact_for_post(self) -> None:
         # Given
         pact = Pact(
             consumer_name='Zach',
@@ -45,6 +45,56 @@ class TestBuildPactJson():
                     },
                     'response': {
                         'body': {'message': 'Ayee whatsup'},
+                        'status': 200
+                    }
+                }
+            ],
+            'metadata': {
+                'pactSpecification': {'version': '3.0.0'}
+            }
+        }
+        assert pact_json == expected
+
+    def test_builds_pact_for_get(self) -> None:
+        # Given
+        pact = Pact(
+            consumer_name='Zach',
+            provider_name='Gabe',
+            interactions=[
+                Interaction(
+                    provider_states=(ProviderState('Zach has one friend online'),),
+                    description='Zach checks friends online',
+                    request=Request(
+                        method='GET',
+                        path='/friends',
+                        query={'status': ['online']}
+                    ),
+                    response=Response(
+                        json={'number': 1},
+                        status_code=200
+                    )
+                )
+            ]
+        )
+
+        # When
+        pact_json = build_pact_json(pact)
+
+        # Then
+        expected = {
+            'consumer': {'name': 'Zach'},
+            'provider': {'name': 'Gabe'},
+            'interactions': [
+                {
+                    'description': 'Zach checks friends online',
+                    'providerStates': [{'name': 'Zach has one friend online'}],
+                    'request': {
+                        'method': 'GET',
+                        'path': '/friends',
+                        'query': {'status': ['online']}
+                    },
+                    'response': {
+                        'body': {'number': 1},
                         'status': 200
                     }
                 }
