@@ -1,7 +1,8 @@
 from typing import Callable, Dict, Tuple
-from typing_extensions import Protocol
 
 import requests
+
+from typing_extensions import Protocol
 
 
 RequestsCallback = Callable[[requests.models.PreparedRequest], Tuple[int, Dict, str]]
@@ -9,5 +10,5 @@ RequestsCallback = Callable[[requests.models.PreparedRequest], Tuple[int, Dict, 
 
 class RequestsMockProtocol(Protocol):
 
-    def add_callback(method: str, path: str, callback: RequestsCallback) -> None:
+    def add_callback(self, method: str, path: str, callback: RequestsCallback) -> None:
         ...

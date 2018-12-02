@@ -1,6 +1,6 @@
 import json
-from contextlib import contextmanager, nullcontext
-from typing import Callable, Dict, Generator, List, NamedTuple, Optional, Tuple
+from contextlib import contextmanager, nullcontext  # type: ignore
+from typing import Callable, Dict, Generator, List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -33,10 +33,12 @@ class PactMaker:
     @contextmanager
     def start_mocking(self, *, outer: Optional[RequestsMockProtocol] = None) -> Generator:
         """Start mocking requests!"""
-        context_manager = responses.RequestsMock() if not outer else contextlib.nullcontext(outer)
+        context_manager = responses.RequestsMock() if not outer else nullcontext(outer)
 
         with context_manager as responses_mock:
-            _register_mock_interactions(self.pact.interactions, self.provider_url, self.add_call, responses_mock)
+            _register_mock_interactions(
+                self.pact.interactions, self.provider_url, self.add_call, responses_mock
+            )
 
             yield
 

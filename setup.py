@@ -1,6 +1,6 @@
 """Setup for pytest-hammertime plugin."""
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 with open('README.md', 'r') as readme:
     long_description = readme.read()
