@@ -230,3 +230,71 @@ class TestBuildPactJson():
             }
         }
         assert pact_json == expected
+
+    def test_builds_pact_with_body_regex_matcher_top_level(self) -> None:
+        # Given
+        pact = Pact(
+            consumer_name='Zach',
+            provider_name='Gabe',
+            interactions=[
+                Interaction(
+                    description='Zach messages gabe',
+                    request=Request(
+                        method='POST',
+                        path='/gabe',
+                        json={'message': Regex('yooo', r'yo\+')}
+                    ),
+                    response=Response(
+                        status_code=200,
+                        json={'message': Regex('ayee whatsup', r'aye\+ whatsup')}
+                    )
+                )
+            ]
+        )
+
+        # When
+        pact_json = build_pact_json(pact)
+
+        # Then
+        expected = {
+            'consumer': {'name': 'Zach'},
+            'provider': {'name': 'Gabe'},
+            'interactions': [
+                {
+                    'description': 'Zach messages gabe',
+                    'request': {
+                        'method': 'POST',
+                        'path': '/gabe',
+                        'body': {'message': 'yooo'},
+                        'matchingRules': {
+                            'body': {
+                                '$.message': {
+                                    'matchers': [{
+                                        'match': 'regex',
+                                        'regex': r'yo\+',
+                                    }]
+                                }
+                            }
+                        }
+                    },
+                    'response': {
+                        'status': 200,
+                        'body': {'message': 'ayee whatsup'},
+                        'matchingRules': {
+                            'body': {
+                                '$.message': {
+                                    'matchers': [{
+                                        'match': 'regex',
+                                        'regex': r'aye\+ whatsup',
+                                    }]
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            'metadata': {
+                'pactSpecification': {'version': '3.0.0'}
+            }
+        }
+        assert pact_json == expected

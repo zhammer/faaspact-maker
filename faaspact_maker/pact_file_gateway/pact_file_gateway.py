@@ -60,7 +60,7 @@ def _build_request(request: Request) -> Dict:
         'method': request.method,
         'path': _build_path(request),
         'query': request.query,
-        'body': request.json,
+        'body': request.json and _build_body(request.json),
         'headers': request.headers and _build_headers(request.headers),
         'matchingRules': _build_request_matching_rules(request)
     })
@@ -70,9 +70,16 @@ def _build_response(response: Response) -> Dict:
     return _drop_none_values({
         'status': response.status_code,
         'headers': response.headers and _build_headers(response.headers),
-        'body': response.json,
+        'body': response.json and _build_body(response.json),
         'matchingRules': _build_response_matching_rules(response)
     })
+
+
+def _build_body(body: Dict) -> Dict:
+    without_matchers = {field: value.value if isinstance(value, matchers.Matcher) else value
+                        for field, value in body.items()}
+
+    return without_matchers
 
 
 def _build_request_matching_rules(request: Request) -> Optional[Dict]:
@@ -84,9 +91,14 @@ def _build_request_matching_rules(request: Request) -> Optional[Dict]:
         }
 
     if request.headers:
-        request_matching_rules = _build_headers_matching_rules(request.headers)
-        if request_matching_rules:
-            matching_rules['header'] = request_matching_rules
+        header_matching_rules = _build_headers_matching_rules(request.headers)
+        if header_matching_rules:
+            matching_rules['header'] = header_matching_rules
+
+    if request.json:
+        body_matching_rules = _build_body_matching_rules(request.json)
+        if body_matching_rules:
+            matching_rules['body'] = body_matching_rules
 
     return matching_rules or None
 
@@ -95,11 +107,30 @@ def _build_response_matching_rules(response: Response) -> Optional[Dict]:
     matching_rules: Dict = {}
 
     if response.headers:
-        response_matching_rules = _build_headers_matching_rules(response.headers)
-        if response_matching_rules:
-            matching_rules['header'] = response_matching_rules
+        header_matching_rules = _build_headers_matching_rules(response.headers)
+        if header_matching_rules:
+            matching_rules['header'] = header_matching_rules
+
+    if response.json:
+        body_matching_rules = _build_body_matching_rules(response.json)
+        if body_matching_rules:
+            matching_rules['body'] = body_matching_rules
 
     return matching_rules or None
+
+
+def _build_body_matching_rules(body: Dict) -> Optional[Dict]:
+    parent = '$'
+
+    body_matching_rules: Dict = {}
+
+    for field, value in body.items():
+        if isinstance(value, matchers.Regex):
+            body_matching_rules[f'{parent}.{field}'] = {
+                'matchers': [_build_regex_matcher(value)]
+            }
+
+    return body_matching_rules or None
 
 
 def _build_headers_matching_rules(headers: Dict[str, Union[str, matchers.Regex]]) -> Optional[Dict]:
