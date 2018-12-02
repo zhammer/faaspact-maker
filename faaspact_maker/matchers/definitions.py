@@ -22,7 +22,7 @@ class Regex:
     value: str
     pattern: str
 
-    def __post__init__(self) -> None:
+    def __post_init__(self) -> None:
         re.compile(self.pattern)
 
 
