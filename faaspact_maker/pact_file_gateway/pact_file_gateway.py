@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from faaspact_maker import matchers
 from faaspact_maker.definitions import Interaction, Pact, ProviderState, Request, Response
@@ -82,7 +82,23 @@ def _build_body(body: Dict) -> Dict:
     without_dictionaries = {field: _build_body(value) if isinstance(value, dict) else value
                             for field, value in without_matchers.items()}
 
-    return without_dictionaries
+    without_lists = {field: _build_body_list(value) if isinstance(value, list) else value
+                     for field, value in without_dictionaries.items()}
+
+    return without_lists
+
+
+def _build_body_list(body_list: List) -> List:
+    without_matchers = [value.value if isinstance(value, matchers.Matcher) else value
+                        for value in body_list]
+
+    without_dictionaries = [_build_body(value) if isinstance(value, dict) else value
+                            for value in without_matchers]
+
+    without_lists = [_build_body_list(value) if isinstance(value, list) else value
+                     for value in without_dictionaries]
+
+    return without_lists
 
 
 def _build_request_matching_rules(request: Request) -> Optional[Dict]:
@@ -118,15 +134,32 @@ def _build_body_matching_rules(body: Dict, parent: str = '$') -> Optional[Dict]:
     body_matching_rules: Dict = {}
 
     for field, value in body.items():
-        if isinstance(value, matchers.Regex):
-            body_matching_rules[f'{parent}.{field}'] = {
-                'matchers': [_build_regex_matcher(value)]
-            }
-        elif isinstance(value, dict):
-            child_matching_rules = _build_body_matching_rules(value, f'{parent}.{field}') or {}
-            body_matching_rules = {**body_matching_rules, **child_matching_rules}
+        child_matching_rule = _build_body_matching_rule(value, f'{parent}.{field}') or {}
+        body_matching_rules = {**body_matching_rules, **child_matching_rule}
 
     return body_matching_rules or None
+
+
+def _build_body_matching_rule(value: Any, key: str) -> Optional[Dict]:
+    if isinstance(value, matchers.Regex):
+            return {key: {'matchers': [_build_regex_matcher(value)]}}
+    elif isinstance(value, dict):
+        return _build_body_matching_rules(value, key) or None
+    elif isinstance(value, list):
+        return _build_body_matching_rules_for_list(value, key)
+    else:
+        return None
+
+
+def _build_body_matching_rules_for_list(body_list: List, parent: str) -> Optional[Dict]:
+    body_matching_rules: Dict = {}
+
+    for index, value in enumerate(body_list):
+        child_matching_rule = _build_body_matching_rule(value, f'{parent}[{index}]')
+        body_matching_rules = {**body_matching_rules, **child_matching_rule}
+
+    return body_matching_rules or None
+
 
 
 def _build_headers_matching_rules(headers: Dict[str, Union[str, matchers.Regex]]) -> Optional[Dict]:
@@ -164,3 +197,4 @@ def _drop_none_values(dictionary: Dict) -> Dict:
     {'greeting': 'hello'}
     """
     return {key: value for key, value in dictionary.items() if value is not None}
+4
