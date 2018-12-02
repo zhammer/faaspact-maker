@@ -1,6 +1,6 @@
+from faaspact_maker.build_pact_json import build_pact_json
 from faaspact_maker.definitions import Interaction, Pact, ProviderState, Request, Response
 from faaspact_maker.matchers import Regex
-from faaspact_maker.pact_file_gateway.pact_file_gateway import build_pact_json
 
 
 class TestBuildPactJson():
