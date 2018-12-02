@@ -17,7 +17,8 @@ class TestBuildPactJson():
                     request=Request(
                         method='POST',
                         path='/gabe',
-                        json={'message': 'Hey gabe'}
+                        json={'message': 'Hey gabe'},
+                        headers={'Authorization': 'Bearer ABCDE'}
                     ),
                     response=Response(
                         json={'message': 'Ayee whatsup'},
@@ -41,7 +42,8 @@ class TestBuildPactJson():
                     'request': {
                         'method': 'POST',
                         'path': '/gabe',
-                        'body': {'message': 'Hey gabe'}
+                        'body': {'message': 'Hey gabe'},
+                        'headers': {'Authorization': 'Bearer ABCDE'}
                     },
                     'response': {
                         'body': {'message': 'Ayee whatsup'},
