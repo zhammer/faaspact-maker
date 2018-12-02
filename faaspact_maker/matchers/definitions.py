@@ -1,9 +1,8 @@
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import Union
 
-
-Primitive = Union[str, int, float, bool, Dict, List]
+from faaspact_maker.types import Primitive
 
 
 class Matcher:

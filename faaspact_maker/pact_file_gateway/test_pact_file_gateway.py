@@ -22,6 +22,7 @@ class TestBuildPactJson():
                     ),
                     response=Response(
                         json={'message': 'Ayee whatsup'},
+                        headers={'Content-Type': 'application/json'},
                         status_code=200
                     )
                 )
@@ -47,6 +48,7 @@ class TestBuildPactJson():
                     },
                     'response': {
                         'body': {'message': 'Ayee whatsup'},
+                        'headers': {'Content-Type': 'application/json'},
                         'status': 200
                     }
                 }
@@ -152,6 +154,74 @@ class TestBuildPactJson():
                     },
                     'response': {
                         'status': 200
+                    }
+                }
+            ],
+            'metadata': {
+                'pactSpecification': {'version': '3.0.0'}
+            }
+        }
+        assert pact_json == expected
+
+    def test_builds_pact_with_headers_regex_matcher(self) -> None:
+        # Given
+        pact = Pact(
+            consumer_name='Zach',
+            provider_name='Gabe',
+            interactions=[
+                Interaction(
+                    description='Zach messages gabe',
+                    request=Request(
+                        method='POST',
+                        path='/gabe',
+                        headers={'Authorization': Regex('Bearer ABCDE', r'Bearer \S\+')}
+                    ),
+                    response=Response(
+                        status_code=200,
+                        headers={'Age': Regex('12', r'\d\+')}
+                    )
+                )
+            ]
+        )
+
+        # When
+        pact_json = build_pact_json(pact)
+
+        # Then
+        expected = {
+            'consumer': {'name': 'Zach'},
+            'provider': {'name': 'Gabe'},
+            'interactions': [
+                {
+                    'description': 'Zach messages gabe',
+                    'request': {
+                        'method': 'POST',
+                        'path': '/gabe',
+                        'headers': {'Authorization': 'Bearer ABCDE'},
+                        'matchingRules': {
+                            'header': {
+                                'Authorization': {
+                                    'matchers': [{
+                                        'match': 'regex',
+                                        'regex': r'Bearer \S\+'
+                                    }]
+                                }
+                            }
+                        }
+                    },
+                    'response': {
+                        'status': 200,
+                        'headers': {'Age': '12'},
+                        'matchingRules': {
+                            'header': {
+                                'Age': {
+                                    'matchers': [{
+                                        'match': 'regex',
+                                        'regex': r'\d\+'
+                                    }]
+                                }
+                            }
+                        }
                     }
                 }
             ],

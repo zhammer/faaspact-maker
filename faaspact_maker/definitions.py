@@ -12,13 +12,13 @@ class Request(NamedTuple):
     method: str
     path: Union[str, matchers.Regex]
     query: Optional[Dict] = None
-    headers: Optional[Dict] = None
+    headers: Optional[Dict[str, Union[str, matchers.Regex]]] = None
     json: Optional[Dict] = None
 
 
 class Response(NamedTuple):
     status_code: int
-    headers: Optional[Dict] = None
+    headers: Optional[Dict[str, Union[str, matchers.Regex]]] = None
     json: Optional[Dict] = None
 
 
