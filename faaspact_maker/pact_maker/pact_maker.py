@@ -52,7 +52,7 @@ class PactMaker:
                 self.pact.interactions, self.provider_url, self.add_call, responses_mock
             )
 
-            yield
+            yield responses_mock
 
         for call in self.calls:
             _validate_call(call)
