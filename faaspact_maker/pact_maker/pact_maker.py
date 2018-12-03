@@ -1,3 +1,8 @@
+"""
+This whole module is incredibly messy right now.
+"""
+
+
 import json
 from contextlib import contextmanager, nullcontext  # type: ignore
 from typing import Callable, Dict, Generator, List, Optional, Tuple
@@ -7,20 +12,27 @@ import requests
 
 import responses
 
+from faaspact_maker.build_pact_json.build_pact_json import _build_request, _build_response
 from faaspact_maker.definitions import Interaction, Pact
 from faaspact_maker.pact_file_gateway import PactFileGateway
-from faaspact_maker.pact_maker.definitions import Call
+from faaspact_maker.pact_maker.definitions import Call, Request
 from faaspact_maker.pact_maker.types import RequestsCallback, RequestsMockProtocol
 
 
 class PactMaker:
     """Make a pact"""
-    def __init__(self, consumer_name: str, provider_name: str, provider_url: str) -> None:
+    def __init__(self,
+                 consumer_name: str,
+                 provider_name: str,
+                 provider_url: str,
+                 *,
+                 pact_directory: str = '') -> None:
         self.pact = Pact(
             consumer_name=consumer_name,
             provider_name=provider_name,
             interactions=[]
         )
+        self.pact_directory = pact_directory
         self.provider_url = provider_url
         self.calls: List[Call] = []
 
@@ -45,7 +57,7 @@ class PactMaker:
         for call in self.calls:
             _validate_call(call)
 
-        PactFileGateway.write_pact_file(self.pact)
+        PactFileGateway.write_pact_file(self.pact, pact_directory=self.pact_directory)
 
 
 def _register_mock_interactions(
@@ -53,12 +65,13 @@ def _register_mock_interactions(
         provider_url: str,
         register_call: Callable[[Call], None],
         responses_mock: responses.RequestsMock) -> None:
-    """Messy!"""
     for interaction in interactions:
         callback: RequestsCallback = _make_callback(interaction, register_call)
+        path = (interaction.request.path if isinstance(interaction.request.path, str)
+                else interaction.request.path.value)
         responses_mock.add_callback(
             interaction.request.method,
-            f'{provider_url}{interaction.request.path}',
+            f'{provider_url}{path}',
             callback=callback
         )
 
@@ -66,39 +79,42 @@ def _register_mock_interactions(
 def _make_callback(interaction: Interaction,
                    register_call: Callable[[Call], None]) -> RequestsCallback:
     def callback(request: requests.models.PreparedRequest) -> Tuple[int, Dict, str]:
-        register_call(Call(_pluck_request(request), interaction))  # todo: pluck out an understood request
+        register_call(Call(_pluck_request_from_requests(request), interaction))
         return (
             interaction.response.status_code,
             interaction.response.headers or {},
-            json.dumps(interaction.response.json)
+            json.dumps(_build_response(interaction.response)['body'])
         )
 
     return callback
 
 
-def _pluck_request(request: requests.models.PreparedRequest) -> Request:
-    return Request(
+def _pluck_request_from_requests(request: requests.models.PreparedRequest) -> Request:
+    return Request(  # type: ignore
         method=request.method,
-        path=urlparse(request.url).path,
-        query=_pluck_query_params(request.url),
-        headers=request.headers
-        json=json.loads(request.body)
+        path=urlparse(request.url).path if request.url else '',
+        query=_pluck_query_params(request.url) if request.url else {},
+        headers=request.headers or {},
+        body=json.loads(request.body) if request.body else None
     )
 
 
 def _validate_call(call: Call) -> None:
     expected_request = call.interaction.request
+    expected_request_json = _build_request(expected_request)
+    actual_request = call.request
 
     if expected_request.headers is not None:
-        assert set(expected_request.headers.items()).issubset(set(call.request.headers.items()))
+        assert set(expected_request_json['headers'].items()).issubset(
+            set(actual_request.headers.items())
+        )
 
     if expected_request.query is not None:
-        assert call.request.url
-        assert expected_request.query == _pluck_query_params(call.request.url)
+        assert expected_request_json['query'] == actual_request.query
 
     if expected_request.json is not None:
-        assert call.request.body
-        assert call.interaction.request.json == json.loads(call.request.body)
+        assert actual_request.body
+        assert expected_request_json['body'] == actual_request.body
 
 
 def _pluck_query_params(url: str) -> Dict:

@@ -1,0 +1,217 @@
+import json
+import tempfile
+from typing import Dict, List
+
+import requests
+
+from faaspact_maker import Interaction, PactMaker, ProviderState, Request, Response
+from faaspact_maker.matchers import Regex
+
+
+class TestPactMaker():
+
+    def test_works_for_pact_without_matchers(self) -> None:
+        with tempfile.TemporaryDirectory() as mock_pact_dir:
+            pact_maker = PactMaker(
+                consumer_name='Zach',
+                provider_name='Gabe',
+                provider_url='https://zachgabechat.com',
+                pact_directory=mock_pact_dir
+            )
+
+            pact_maker.add_interaction(Interaction(
+                description='Zach messages gabe',
+                provider_states=(ProviderState('Gabe is online'),),
+                request=Request(
+                    method='POST',
+                    path='/gabe',
+                    json={'message': 'Hey gabe'}
+                ),
+                response=Response(
+                    json={'message': 'Ayee whatsup'},
+                    status_code=200
+                )
+            ))
+
+            pact_maker.add_interaction(Interaction(
+                description='Zach checks friends online',
+                provider_states=(ProviderState('I have one friend online'),),
+                request=Request(
+                    method='GET',
+                    path='/friends',
+                    query={'status': ['online']}
+                ),
+                response=Response(
+                    json={'number': 1},
+                    status_code=200
+                )
+            ))
+
+            json_responses: List[Dict] = []
+
+            with pact_maker.start_mocking():
+                r = requests.post('https://zachgabechat.com/gabe', json={'message': 'Hey gabe'})
+                json_responses.append(r.json())
+
+                r = requests.get('https://zachgabechat.com/friends', params={'status': 'online'})
+                json_responses.append(r.json())
+
+                assert json_responses[0] == {'message': 'Ayee whatsup'}
+                assert json_responses[1] == {'number': 1}
+
+            with open(f'{mock_pact_dir}/Zach-Gabe.pact.json') as pact_file:
+                pact_json = json.load(pact_file)
+
+            expected_pact_json = {
+                'consumer': {'name': 'Zach'},
+                'provider': {'name': 'Gabe'},
+                'interactions': [
+                    {
+                        'description': 'Zach messages gabe',
+                        'providerStates': [{'name': 'Gabe is online'}],
+                        'request': {
+                            'method': 'POST',
+                            'path': '/gabe',
+                            'body': {'message': 'Hey gabe'}
+                        },
+                        'response': {
+                            'body': {'message': 'Ayee whatsup'},
+                            'status': 200
+                        }
+                    },
+                    {
+                        'description': 'Zach checks friends online',
+                        'providerStates': [{'name': 'I have one friend online'}],
+                        'request': {
+                            'method': 'GET',
+                            'path': '/friends',
+                            'query': {'status': ['online']}
+                        },
+                        'response': {
+                            'body': {'number': 1},
+                            'status': 200
+                        }
+                    }
+                ],
+                'metadata': {
+                    'pactSpecification': {'version': '3.0.0'}
+                }
+            }
+        assert pact_json == expected_pact_json
+
+    def test_mocks_for_pact_with_matchers(self) -> None:
+        with tempfile.TemporaryDirectory() as mock_pact_dir:
+            pact_maker = PactMaker(
+                consumer_name='Zach',
+                provider_name='Gabe',
+                provider_url='https://zachgabechat.com',
+                pact_directory=mock_pact_dir
+            )
+
+            pact_maker.add_interaction(Interaction(
+                description='Zach messages gabe',
+                provider_states=(ProviderState('Gabe is online'),),
+                request=Request(
+                    method='POST',
+                    path=Regex('/gabe', r'\/(gabe|gabriel)'),
+                    json={'message': Regex('Hey gabe', r'(Hey|Yo) gabe')}
+                ),
+                response=Response(
+                    json={'message': Regex('Ayee whatsup', r'Aye+ whatsup')},
+                    status_code=200
+                )
+            ))
+
+            pact_maker.add_interaction(Interaction(
+                description='Zach checks friends online',
+                provider_states=(ProviderState('I have one friend online'),),
+                request=Request(
+                    method='GET',
+                    path='/friends',
+                    query={'status': ['online']}
+                ),
+                response=Response(
+                    json={'number': 1},
+                    status_code=200
+                )
+            ))
+
+            json_responses: List[Dict] = []
+
+            with pact_maker.start_mocking():
+                r = requests.post('https://zachgabechat.com/gabe', json={'message': 'Hey gabe'})
+                json_responses.append(r.json())
+
+                r = requests.get('https://zachgabechat.com/friends', params={'status': 'online'})
+                json_responses.append(r.json())
+
+                assert json_responses[0] == {'message': 'Ayee whatsup'}
+                assert json_responses[1] == {'number': 1}
+
+            with open(f'{mock_pact_dir}/Zach-Gabe.pact.json') as pact_file:
+                pact_json = json.load(pact_file)
+
+            expected_pact_json = {
+                'consumer': {'name': 'Zach'},
+                'provider': {'name': 'Gabe'},
+                'interactions': [
+                    {
+                        'description': 'Zach messages gabe',
+                        'providerStates': [{'name': 'Gabe is online'}],
+                        'request': {
+                            'method': 'POST',
+                            'path': '/gabe',
+                            'body': {'message': 'Hey gabe'},
+                            'matchingRules': {
+                                'path': {
+                                    'matchers': [
+                                        {
+                                            'match': 'regex',
+                                            'regex': r'\/(gabe|gabriel)'
+                                        }
+                                    ]
+                                },
+                                'body': {
+                                    '$.message': {'matchers': [
+                                        {
+                                            'match': 'regex',
+                                            'regex': r'(Hey|Yo) gabe'
+                                        }
+                                    ]}
+                                }
+                            }
+                        },
+                        'response': {
+                            'body': {'message': 'Ayee whatsup'},
+                            'status': 200,
+                            'matchingRules': {
+                                'body': {
+                                    '$.message': {
+                                        'matchers': [{
+                                            'match': 'regex',
+                                            'regex': r'Aye+ whatsup'
+                                        }]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        'description': 'Zach checks friends online',
+                        'providerStates': [{'name': 'I have one friend online'}],
+                        'request': {
+                            'method': 'GET',
+                            'path': '/friends',
+                            'query': {'status': ['online']}
+                        },
+                        'response': {
+                            'body': {'number': 1},
+                            'status': 200
+                        }
+                    }
+                ],
+                'metadata': {
+                    'pactSpecification': {'version': '3.0.0'}
+                }
+            }
+        assert pact_json == expected_pact_json
