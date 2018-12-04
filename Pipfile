@@ -11,6 +11,7 @@ mypy = "*"
 flake8 = "*"
 pytest = "*"
 twine = "*"
+pipenv = "*"
 
 [packages]
 responses = "*"
