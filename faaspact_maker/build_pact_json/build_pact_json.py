@@ -1,7 +1,13 @@
 from typing import Any, Dict, List, Optional, Union
 
 from faaspact_maker import matchers
-from faaspact_maker.definitions import Interaction, Pact, ProviderState, Request, Response
+from faaspact_maker.definitions import (
+    Interaction,
+    Pact,
+    ProviderState,
+    RequestWithMatchers,
+    ResponseWithMatchers
+)
 
 
 def build_pact_json(pact: Pact) -> Dict:
@@ -31,53 +37,23 @@ def _build_provider_state(provider_state: ProviderState) -> Dict:
     })
 
 
-def _build_request(request: Request) -> Dict:
+def _build_request(request_with_matchers: RequestWithMatchers) -> Dict:
+    request = request_with_matchers.without_matchers()
     return _drop_none_values({
-        'method': request.method,
-        'path': _build_path(request),
-        'query': request.query,
-        'body': request.json and _build_body(request.json),
-        'headers': request.headers and _build_headers(request.headers),
-        'matchingRules': _build_request_matching_rules(request)
+        **request._asdict(),
+        'matchingRules': _build_request_matching_rules(request_with_matchers)
     })
 
 
-def _build_response(response: Response) -> Dict:
+def _build_response(response_with_matchers: ResponseWithMatchers) -> Dict:
+    response = response_with_matchers.without_matchers()
     return _drop_none_values({
-        'status': response.status_code,
-        'headers': response.headers and _build_headers(response.headers),
-        'body': response.json and _build_body(response.json),
-        'matchingRules': _build_response_matching_rules(response)
+        **response._asdict(),
+        'matchingRules': _build_response_matching_rules(response_with_matchers)
     })
 
 
-def _build_body(body: Dict) -> Dict:
-    without_matchers = {field: value.value if isinstance(value, matchers.Matcher) else value
-                        for field, value in body.items()}
-
-    without_dictionaries = {field: _build_body(value) if isinstance(value, dict) else value
-                            for field, value in without_matchers.items()}
-
-    without_lists = {field: _build_body_list(value) if isinstance(value, list) else value
-                     for field, value in without_dictionaries.items()}
-
-    return without_lists
-
-
-def _build_body_list(body_list: List) -> List:
-    without_matchers = [value.value if isinstance(value, matchers.Matcher) else value
-                        for value in body_list]
-
-    without_dictionaries = [_build_body(value) if isinstance(value, dict) else value
-                            for value in without_matchers]
-
-    without_lists = [_build_body_list(value) if isinstance(value, list) else value
-                     for value in without_dictionaries]
-
-    return without_lists
-
-
-def _build_request_matching_rules(request: Request) -> Optional[Dict]:
+def _build_request_matching_rules(request: RequestWithMatchers) -> Optional[Dict]:
     matching_rules: Dict = {}
 
     if isinstance(request.path, matchers.Regex):
@@ -88,20 +64,20 @@ def _build_request_matching_rules(request: Request) -> Optional[Dict]:
     if request.headers:
         matching_rules['header'] = _build_headers_matching_rules(request.headers)
 
-    if request.json:
-        matching_rules['body'] = _build_body_matching_rules(request.json)
+    if request.body:
+        matching_rules['body'] = _build_body_matching_rules(request.body)
 
     return _drop_none_values(matching_rules) or None
 
 
-def _build_response_matching_rules(response: Response) -> Optional[Dict]:
+def _build_response_matching_rules(response: ResponseWithMatchers) -> Optional[Dict]:
     matching_rules: Dict = {}
 
     if response.headers:
         matching_rules['header'] = _build_headers_matching_rules(response.headers)
 
-    if response.json:
-        matching_rules['body'] = _build_body_matching_rules(response.json)
+    if response.body:
+        matching_rules['body'] = _build_body_matching_rules(response.body)
 
     return _drop_none_values(matching_rules) or None
 
@@ -147,15 +123,6 @@ def _build_headers_matching_rules(headers: Dict[str, Union[str, matchers.Regex]]
             }
 
     return headers_matching_rules or None
-
-
-def _build_headers(headers: Dict[str, Union[str, matchers.Regex]]) -> Dict:
-    return {field: value.value if isinstance(value, matchers.Regex) else value
-            for field, value in headers.items()}
-
-
-def _build_path(request: Request) -> str:
-    return request.path if isinstance(request.path, str) else request.path.value
 
 
 def _build_regex_matcher(regex_matcher: matchers.Regex) -> Dict:

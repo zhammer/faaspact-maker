@@ -81,7 +81,7 @@ def _make_callback(interaction: Interaction,
     def callback(request: requests.models.PreparedRequest) -> Tuple[int, Dict, str]:
         register_call(Call(_pluck_request_from_requests(request), interaction))
         return (
-            interaction.response.status_code,
+            interaction.response.status,
             interaction.response.headers or {},
             json.dumps(_build_response(interaction.response)['body'])
         )
@@ -101,20 +101,20 @@ def _pluck_request_from_requests(request: requests.models.PreparedRequest) -> Re
 
 def _validate_call(call: Call) -> None:
     expected_request = call.interaction.request
-    expected_request_json = _build_request(expected_request)
+    expected_request_body = _build_request(expected_request)
     actual_request = call.request
 
     if expected_request.headers is not None:
-        assert set(expected_request_json['headers'].items()).issubset(
+        assert set(expected_request_body['headers'].items()).issubset(
             set(actual_request.headers.items())
         )
 
     if expected_request.query is not None:
-        assert expected_request_json['query'] == actual_request.query
+        assert expected_request_body['query'] == actual_request.query
 
-    if expected_request.json is not None:
+    if expected_request.body is not None:
         assert actual_request.body
-        assert expected_request_json['body'] == actual_request.body
+        assert expected_request_body['body'] == actual_request.body
 
 
 def _pluck_query_params(url: str) -> Dict:

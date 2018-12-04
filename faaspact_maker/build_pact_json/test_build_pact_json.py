@@ -1,5 +1,11 @@
 from faaspact_maker.build_pact_json import build_pact_json
-from faaspact_maker.definitions import Interaction, Pact, ProviderState, Request, Response
+from faaspact_maker.definitions import (
+    Interaction,
+    Pact,
+    ProviderState,
+    RequestWithMatchers,
+    ResponseWithMatchers
+)
 from faaspact_maker.matchers import Regex
 
 
@@ -14,16 +20,16 @@ class TestBuildPactJson():
                 Interaction(
                     provider_states=(ProviderState('Gabe is online'),),
                     description='Zach messages gabe',
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='POST',
                         path='/gabe',
-                        json={'message': 'Hey gabe'},
+                        body={'message': 'Hey gabe'},
                         headers={'Authorization': 'Bearer ABCDE'}
                     ),
-                    response=Response(
-                        json={'message': 'Ayee whatsup'},
+                    response=ResponseWithMatchers(
+                        body={'message': 'Ayee whatsup'},
                         headers={'Content-Type': 'application/json'},
-                        status_code=200
+                        status=200
                     )
                 )
             ]
@@ -68,14 +74,14 @@ class TestBuildPactJson():
                 Interaction(
                     provider_states=(ProviderState('Zach has one friend online'),),
                     description='Zach checks friends online',
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='GET',
                         path='/friends',
                         query={'status': ['online']}
                     ),
-                    response=Response(
-                        json={'number': 1},
-                        status_code=200
+                    response=ResponseWithMatchers(
+                        body={'number': 1},
+                        status=200
                     )
                 )
             ]
@@ -117,12 +123,12 @@ class TestBuildPactJson():
             interactions=[
                 Interaction(
                     description='Zach messages gabe',
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='POST',
                         path=Regex('/gabe', r'\/\w+')
                     ),
-                    response=Response(
-                        status_code=200
+                    response=ResponseWithMatchers(
+                        status=200
                     )
                 )
             ]
@@ -171,13 +177,13 @@ class TestBuildPactJson():
             interactions=[
                 Interaction(
                     description='Zach messages gabe',
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='POST',
                         path='/gabe',
                         headers={'Authorization': Regex('Bearer ABCDE', r'Bearer \S+')}
                     ),
-                    response=Response(
-                        status_code=200,
+                    response=ResponseWithMatchers(
+                        status=200,
                         headers={'Age': Regex('12', r'\d+')}
                     )
                 )
@@ -239,14 +245,14 @@ class TestBuildPactJson():
             interactions=[
                 Interaction(
                     description='Zach messages gabe',
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='POST',
                         path='/gabe',
-                        json={'message': Regex('yooo', r'yo+')}
+                        body={'message': Regex('yooo', r'yo+')}
                     ),
-                    response=Response(
-                        status_code=200,
-                        json={'message': Regex('ayee whatsup', r'aye+ whatsup')}
+                    response=ResponseWithMatchers(
+                        status=200,
+                        body={'message': Regex('ayee whatsup', r'aye+ whatsup')}
                     )
                 )
             ]
@@ -307,14 +313,14 @@ class TestBuildPactJson():
             interactions=[
                 Interaction(
                     description='Zach messages gabe',
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='POST',
                         path='/gabe',
-                        json={'message': {'contents': Regex('yooo', r'yo+')}}
+                        body={'message': {'contents': Regex('yooo', r'yo+')}}
                     ),
-                    response=Response(
-                        status_code=200,
-                        json={'message': {'contents': Regex('ayee whatsup', r'aye+ whatsup')}}
+                    response=ResponseWithMatchers(
+                        status=200,
+                        body={'message': {'contents': Regex('ayee whatsup', r'aye+ whatsup')}}
                     )
                 )
             ]
@@ -375,14 +381,14 @@ class TestBuildPactJson():
             interactions=[
                 Interaction(
                     description='Zach messages gabe',
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='POST',
                         path='/gabe',
-                        json={'messages': [Regex('yooo', r'yo+')]}
+                        body={'messages': [Regex('yooo', r'yo+')]}
                     ),
-                    response=Response(
-                        status_code=200,
-                        json={'messages': [Regex('ayee whatsup', r'aye+ whatsup')]}
+                    response=ResponseWithMatchers(
+                        status=200,
+                        body={'messages': [Regex('ayee whatsup', r'aye+ whatsup')]}
                     )
                 )
             ]

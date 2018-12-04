@@ -4,7 +4,13 @@ from typing import Dict, List
 
 import requests
 
-from faaspact_maker import Interaction, PactMaker, ProviderState, Request, Response
+from faaspact_maker import (
+    Interaction,
+    PactMaker,
+    ProviderState,
+    RequestWithMatchers,
+    ResponseWithMatchers
+)
 from faaspact_maker.matchers import Regex
 
 
@@ -22,28 +28,28 @@ class TestPactMaker():
             pact_maker.add_interaction(Interaction(
                 description='Zach messages gabe',
                 provider_states=(ProviderState('Gabe is online'),),
-                request=Request(
+                request=RequestWithMatchers(
                     method='POST',
                     path='/gabe',
-                    json={'message': 'Hey gabe'}
+                    body={'message': 'Hey gabe'}
                 ),
-                response=Response(
-                    json={'message': 'Ayee whatsup'},
-                    status_code=200
+                response=ResponseWithMatchers(
+                    body={'message': 'Ayee whatsup'},
+                    status=200
                 )
             ))
 
             pact_maker.add_interaction(Interaction(
                 description='Zach checks friends online',
                 provider_states=(ProviderState('I have one friend online'),),
-                request=Request(
+                request=RequestWithMatchers(
                     method='GET',
                     path='/friends',
                     query={'status': ['online']}
                 ),
-                response=Response(
-                    json={'number': 1},
-                    status_code=200
+                response=ResponseWithMatchers(
+                    body={'number': 1},
+                    status=200
                 )
             ))
 
@@ -111,28 +117,28 @@ class TestPactMaker():
             pact_maker.add_interaction(Interaction(
                 description='Zach messages gabe',
                 provider_states=(ProviderState('Gabe is online'),),
-                request=Request(
+                request=RequestWithMatchers(
                     method='POST',
                     path=Regex('/gabe', r'\/(gabe|gabriel)'),
-                    json={'message': Regex('Hey gabe', r'(Hey|Yo) gabe')}
+                    body={'message': Regex('Hey gabe', r'(Hey|Yo) gabe')}
                 ),
-                response=Response(
-                    json={'message': Regex('Ayee whatsup', r'Aye+ whatsup')},
-                    status_code=200
+                response=ResponseWithMatchers(
+                    body={'message': Regex('Ayee whatsup', r'Aye+ whatsup')},
+                    status=200
                 )
             ))
 
             pact_maker.add_interaction(Interaction(
                 description='Zach checks friends online',
                 provider_states=(ProviderState('I have one friend online'),),
-                request=Request(
+                request=RequestWithMatchers(
                     method='GET',
                     path='/friends',
                     query={'status': ['online']}
                 ),
-                response=Response(
-                    json={'number': 1},
-                    status_code=200
+                response=ResponseWithMatchers(
+                    body={'number': 1},
+                    status=200
                 )
             ))
 
@@ -231,14 +237,14 @@ class TestNestedMocker:
             pact_maker_outer.add_interaction(Interaction(
                 description='Zach messages gabe',
                 provider_states=(ProviderState('Gabe is online'),),
-                request=Request(
+                request=RequestWithMatchers(
                     method='POST',
                     path='/gabe',
-                    json={'message': 'Hey gabe'}
+                    body={'message': 'Hey gabe'}
                 ),
-                response=Response(
-                    json={'message': 'Ayee whatsup'},
-                    status_code=200
+                response=ResponseWithMatchers(
+                    body={'message': 'Ayee whatsup'},
+                    status=200
                 )
             ))
 
@@ -255,14 +261,14 @@ class TestNestedMocker:
                 pact_maker_inner.add_interaction(Interaction(
                     description='Zach messages evan',
                     provider_states=(ProviderState('Evan is offline'),),
-                    request=Request(
+                    request=RequestWithMatchers(
                         method='POST',
                         path='/evan',
-                        json={'message': 'Hey evan'}
+                        body={'message': 'Hey evan'}
                     ),
-                    response=Response(
-                        json={'message': 'Evan is not online'},
-                        status_code=200
+                    response=ResponseWithMatchers(
+                        body={'message': 'Evan is not online'},
+                        status=200
                     )
                 ))
 
