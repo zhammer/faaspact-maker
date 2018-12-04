@@ -12,7 +12,6 @@ import requests
 
 import responses
 
-from faaspact_maker.build_pact_json.build_pact_json import _build_request, _build_response
 from faaspact_maker.definitions import Interaction, Pact
 from faaspact_maker.pact_file_gateway import PactFileGateway
 from faaspact_maker.pact_maker.definitions import Call, Request
@@ -80,10 +79,11 @@ def _make_callback(interaction: Interaction,
                    register_call: Callable[[Call], None]) -> RequestsCallback:
     def callback(request: requests.models.PreparedRequest) -> Tuple[int, Dict, str]:
         register_call(Call(_pluck_request_from_requests(request), interaction))
+        response_without_matchers = interaction.response.without_matchers()
         return (
-            interaction.response.status,
-            interaction.response.headers or {},
-            json.dumps(_build_response(interaction.response)['body'])
+            response_without_matchers.status,
+            response_without_matchers.headers or {},
+            json.dumps(response_without_matchers.body)
         )
 
     return callback
@@ -100,21 +100,19 @@ def _pluck_request_from_requests(request: requests.models.PreparedRequest) -> Re
 
 
 def _validate_call(call: Call) -> None:
-    expected_request = call.interaction.request
-    expected_request_body = _build_request(expected_request)
+    expected_request = call.interaction.request.without_matchers()
     actual_request = call.request
 
     if expected_request.headers is not None:
-        assert set(expected_request_body['headers'].items()).issubset(
-            set(actual_request.headers.items())
-        )
+        assert actual_request.headers
+        assert set(expected_request.headers.items()).issubset(set(actual_request.headers.items()))
 
     if expected_request.query is not None:
-        assert expected_request_body['query'] == actual_request.query
+        assert expected_request.query == actual_request.query
 
     if expected_request.body is not None:
         assert actual_request.body
-        assert expected_request_body['body'] == actual_request.body
+        assert expected_request.body == actual_request.body
 
 
 def _pluck_query_params(url: str) -> Dict:

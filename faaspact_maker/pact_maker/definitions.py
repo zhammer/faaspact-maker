@@ -1,14 +1,6 @@
-from typing import Dict, NamedTuple, Optional
+from typing import NamedTuple
 
-from faaspact_maker import Interaction
-
-
-class Request(NamedTuple):
-    method: str
-    path: str
-    headers: Dict[str, str]
-    query: Optional[Dict] = None
-    body: Optional[Dict] = None
+from faaspact_maker.definitions import Interaction, Request
 
 
 class Call(NamedTuple):
