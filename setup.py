@@ -1,9 +1,9 @@
 """Setup for pytest-hammertime plugin."""
 
-from setuptools import setup, find_packages
-
 from pipenv.project import Project
 from pipenv.utils import convert_deps_to_pip
+
+from setuptools import find_packages, setup
 
 pipfile = Project(chdir=False).parsed_pipfile
 requirements = convert_deps_to_pip(pipfile['packages'], r=False)
