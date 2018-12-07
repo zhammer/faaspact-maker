@@ -12,6 +12,8 @@ class PactFileGateway:
     def write_pact_file(pact: Pact, *,
                         pact_directory: str = '',
                         overwrite_existing: bool = True) -> None:
+        os.makedirs(pact_directory, exist_ok=True)
+
         pact_json = build_pact_json(pact)
         pact_file_path = _build_pact_file_path(pact_directory, pact)
 
