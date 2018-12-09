@@ -30,4 +30,4 @@ class Regex:
 
 @dataclass
 class Like:
-    value: Union[Primitive, Matcher]
+    value: Union[str, int, float, bool]  # for now, Like only supports scalars

@@ -6,7 +6,7 @@ from faaspact_maker.definitions import (
     RequestWithMatchers,
     ResponseWithMatchers
 )
-from faaspact_maker.matchers import Regex
+from faaspact_maker.matchers import Like, Regex
 
 
 class TestBuildPactJson():
@@ -429,6 +429,68 @@ class TestBuildPactJson():
                                         'match': 'regex',
                                         'regex': r'aye+ whatsup',
                                     }]
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            'metadata': {
+                'pactSpecification': {'version': '3.0.0'}
+            }
+        }
+        assert pact_json == expected
+
+    def test_builds_pact_with_body_like_matcher_top_level(self) -> None:
+        # Given
+        pact = Pact(
+            consumer_name='Zach',
+            provider_name='Gabe',
+            interactions=[
+                Interaction(
+                    description='Zach messages gabe',
+                    request=RequestWithMatchers(
+                        method='POST',
+                        path='/gabe',
+                        body={'message': Like('yooo')}
+                    ),
+                    response=ResponseWithMatchers(
+                        status=200,
+                        body={'message': Like('ayee whatsup')}
+                    )
+                )
+            ]
+        )
+
+        # When
+        pact_json = build_pact_json(pact)
+
+        # Then
+        expected = {
+            'consumer': {'name': 'Zach'},
+            'provider': {'name': 'Gabe'},
+            'interactions': [
+                {
+                    'description': 'Zach messages gabe',
+                    'request': {
+                        'method': 'POST',
+                        'path': '/gabe',
+                        'body': {'message': 'yooo'},
+                        'matchingRules': {
+                            'body': {
+                                '$.message': {
+                                    'matchers': [{'match': 'type'}]
+                                }
+                            }
+                        }
+                    },
+                    'response': {
+                        'status': 200,
+                        'body': {'message': 'ayee whatsup'},
+                        'matchingRules': {
+                            'body': {
+                                '$.message': {
+                                    'matchers': [{'match': 'type'}]
                                 }
                             }
                         }
