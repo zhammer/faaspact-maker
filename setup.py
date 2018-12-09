@@ -1,5 +1,3 @@
-"""Setup for pytest-hammertime plugin."""
-
 from pipenv.project import Project
 from pipenv.utils import convert_deps_to_pip
 
@@ -17,6 +15,7 @@ setup(
     description='Make and mock pacts in python for faas microservices.',
     url='https://github.com/zhammer/faaspact-maker',
     packages=find_packages(),
+    package_data={'faaspact_maker': ['py.typed']},
     install_requires=requirements,
     author='Zach Hammer',
     author_email='zach.the.hammer@gmail.com',
