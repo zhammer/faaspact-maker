@@ -31,9 +31,3 @@ class Regex:
 @dataclass
 class Like:
     value: Union[Primitive, Matcher]
-
-
-@dataclass
-class EachLike:
-    value: Union[Primitive, Matcher]
-    min: int = 1

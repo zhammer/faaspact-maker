@@ -1,1 +1,1 @@
-from .definitions import EachLike, Like, Matcher, Regex
+from .definitions import Like, Matcher, Regex
