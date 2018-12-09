@@ -94,7 +94,7 @@ def _build_body_matching_rules(body: Dict, parent: str = '$') -> Optional[Dict]:
 
 def _build_body_matching_rule(value: Any, key: str) -> Optional[Dict]:
     if isinstance(value, matchers.Regex):
-            return {key: {'matchers': [_build_regex_matcher(value)]}}
+        return {key: {'matchers': [_build_regex_matcher(value)]}}
     elif isinstance(value, dict):
         return _build_body_matching_rules(value, key) or None
     elif isinstance(value, list):
