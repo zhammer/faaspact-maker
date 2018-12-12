@@ -46,7 +46,7 @@ class Interaction(NamedTuple):
     description: str
     request: RequestWithMatchers
     response: ResponseWithMatchers
-    provider_states: Optional[Tuple[ProviderState]] = None
+    provider_states: Optional[Tuple[ProviderState, ...]] = None
 
 
 class Pact(NamedTuple):
